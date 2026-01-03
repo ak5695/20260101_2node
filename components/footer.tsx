@@ -9,7 +9,7 @@ export function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           {/* Copyright */}
           <div className="text-center md:text-left">
-            <p>© {currentYear} AI Chatbot. All rights reserved.</p>
+            <p>© {currentYear} <span className="font-bold text-white">2node</span> · Made by <a href="https://dufran.CN" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors underline decoration-white/20">Dufran</a></p>
           </div>
 
           {/* Legal Links */}

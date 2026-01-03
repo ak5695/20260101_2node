@@ -1,4 +1,4 @@
-import type { LanguageModelV3StreamPart } from "@ai-sdk/provider";
+import type { LanguageModelV3StreamPart, LanguageModelV3FinishReason } from "@ai-sdk/provider";
 
 const mockUsage = {
   inputTokens: { total: 10, noCache: 10, cacheRead: 0, cacheWrite: 0 },
@@ -23,7 +23,7 @@ export function getResponseChunksByPrompt(
     { type: "text-start", id: "t1" },
     { type: "text-delta", id: "t1", delta: "Hello, world!" },
     { type: "text-end", id: "t1" },
-    { type: "finish", finishReason: "stop", usage: mockUsage }
+    { type: "finish", finishReason: "stop" as unknown as LanguageModelV3FinishReason, usage: mockUsage }
   );
 
   return chunks;

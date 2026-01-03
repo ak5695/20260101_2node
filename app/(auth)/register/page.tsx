@@ -78,12 +78,12 @@ export default function Page() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="flex flex-col items-center justify-center gap-3 mb-8 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
-            <UserPlus className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-lg shadow-white/5 border border-white/10">
+            <span className="text-2xl font-black text-black tracking-tighter">2node</span>
           </div>
-          <h1 className="font-bold text-3xl text-white">Create Account</h1>
-          <p className="text-zinc-400 text-sm">
-            Get started with your free account
+          <h1 className="font-bold text-3xl text-white">Join 2node</h1>
+          <p className="text-zinc-400 text-sm italic tracking-wide">
+            Connected thinking starts here
           </p>
         </div>
 
@@ -137,7 +137,7 @@ export default function Page() {
           <p className="mt-6 text-center text-zinc-400 text-sm">
             Already have an account?{" "}
             <Link
-              className="font-semibold text-purple-400 hover:text-purple-300 transition-colors"
+              className="font-semibold text-zinc-100 hover:text-white transition-colors underline underline-offset-4 decoration-white/20 hover:decoration-white"
               href="/login"
             >
               Sign in

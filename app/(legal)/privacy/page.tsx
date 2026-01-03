@@ -22,7 +22,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
             <p className="text-zinc-300 leading-relaxed">
-              Welcome to our AI Chatbot service ("Service"). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Service.
+              Welcome to 2node ("Service"). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Service.
             </p>
           </section>
 
@@ -30,7 +30,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">2. Information We Collect</h2>
             
-            <h3 className="text-xl font-semibold mb-3 text-indigo-400">2.1 Personal Information</h3>
+            <h3 className="text-xl font-semibold mb-3 text-zinc-200">2.1 Personal Information</h3>
             <p className="text-zinc-300 leading-relaxed mb-4">
               We collect personal information that you voluntarily provide to us when you:
             </p>
@@ -41,7 +41,7 @@ export default function PrivacyPage() {
               <li>Subscribe to our newsletter</li>
             </ul>
 
-            <h3 className="text-xl font-semibold mb-3 mt-6 text-indigo-400">2.2 Information Collected Automatically</h3>
+            <h3 className="text-xl font-semibold mb-3 mt-6 text-zinc-200">2.2 Information Collected Automatically</h3>
             <p className="text-zinc-300 leading-relaxed mb-4">
               When you use our Service, we automatically collect certain information, including:
             </p>
@@ -51,7 +51,7 @@ export default function PrivacyPage() {
               <li>Cookies and similar tracking technologies</li>
             </ul>
 
-            <h3 className="text-xl font-semibold mb-3 mt-6 text-indigo-400">2.3 Chat and Workspace Data</h3>
+            <h3 className="text-xl font-semibold mb-3 mt-6 text-zinc-200">2.3 Chat and Workspace Data</h3>
             <p className="text-zinc-300 leading-relaxed">
               We store your chat conversations, workspaces, and canvas data to provide and improve our Service. This includes:
             </p>
@@ -86,7 +86,7 @@ export default function PrivacyPage() {
               We may share your information in the following situations:
             </p>
             
-            <h3 className="text-xl font-semibold mb-3 text-indigo-400">4.1 Service Providers</h3>
+            <h3 className="text-xl font-semibold mb-3 text-zinc-200">4.1 Service Providers</h3>
             <p className="text-zinc-300 leading-relaxed mb-4">
               We may share your information with third-party service providers who perform services on our behalf, such as:
             </p>
@@ -97,12 +97,12 @@ export default function PrivacyPage() {
               <li>Customer support tools</li>
             </ul>
 
-            <h3 className="text-xl font-semibold mb-3 mt-6 text-indigo-400">4.2 Legal Requirements</h3>
+            <h3 className="text-xl font-semibold mb-3 mt-6 text-zinc-200">4.2 Legal Requirements</h3>
             <p className="text-zinc-300 leading-relaxed">
               We may disclose your information if required to do so by law or in response to valid requests by public authorities.
             </p>
 
-            <h3 className="text-xl font-semibold mb-3 mt-6 text-indigo-400">4.3 Business Transfers</h3>
+            <h3 className="text-xl font-semibold mb-3 mt-6 text-zinc-200">4.3 Business Transfers</h3>
             <p className="text-zinc-300 leading-relaxed">
               In the event of a merger, acquisition, or sale of assets, your information may be transferred to the acquiring entity.
             </p>
@@ -151,7 +151,7 @@ export default function PrivacyPage() {
               <li><strong>Withdraw consent:</strong> Withdraw consent for data processing</li>
             </ul>
             <p className="text-zinc-300 leading-relaxed mt-4">
-              To exercise these rights, please contact us at privacy@example.com
+              To exercise these rights, please contact us at ji569514123@gmail.com
             </p>
           </section>
 
@@ -202,8 +202,8 @@ export default function PrivacyPage() {
               If you have any questions about this Privacy Policy, please contact us:
             </p>
             <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-6">
-              <p className="text-zinc-300">Email: privacy@example.com</p>
-              <p className="text-zinc-300">Address: [Your Company Address]</p>
+              <p className="text-zinc-300">Email: ji569514123@gmail.com</p>
+              <p className="text-zinc-300">Official Website: <a href="https://dufran.CN" target="_blank" rel="noopener noreferrer" className="text-zinc-200 hover:text-white underline">dufran.CN</a></p>
             </div>
           </section>
         </div>

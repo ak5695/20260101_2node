@@ -22,7 +22,7 @@ export default function RefundPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">1. Our Commitment</h2>
             <p className="text-zinc-300 leading-relaxed">
-              We want you to be completely satisfied with our AI Chatbot service. If you're not happy with your purchase, we're here to help. This Refund Policy outlines the terms and conditions for requesting a refund.
+              We want you to be completely satisfied with 2node. If you're not happy with your purchase, we're here to help. This Refund Policy outlines the terms and conditions for requesting a refund.
             </p>
           </section>
 
@@ -99,19 +99,19 @@ export default function RefundPage() {
             
             <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-6 space-y-6">
               <div className="flex items-start gap-4">
-                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0 text-white font-bold">
+                <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0 text-white font-bold">
                   1
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Contact Support</h3>
                   <p className="text-zinc-300">
-                    Email us at <a href="mailto:refunds@example.com" className="text-indigo-400 hover:text-indigo-300 underline">refunds@example.com</a> with your request
+                    Email us at <a href="mailto:ji569514123@gmail.com" className="text-zinc-200 hover:text-white underline">ji569514123@gmail.com</a> with your request
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0 text-white font-bold">
+                <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0 text-white font-bold">
                   2
                 </div>
                 <div>
@@ -127,7 +127,7 @@ export default function RefundPage() {
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0 text-white font-bold">
+                <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0 text-white font-bold">
                   3
                 </div>
                 <div>
@@ -139,7 +139,7 @@ export default function RefundPage() {
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0 text-white font-bold">
+                <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0 text-white font-bold">
                   4
                 </div>
                 <div>
@@ -158,22 +158,22 @@ export default function RefundPage() {
             
             <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-6">
               <div className="flex items-center gap-3 mb-4">
-                <Clock className="text-indigo-400" size={24} />
+                <Clock className="text-zinc-400" size={24} />
                 <h3 className="text-xl font-semibold">Expected Timeline</h3>
               </div>
               
               <div className="space-y-4">
                 <div className="flex justify-between items-center pb-3 border-b border-white/10">
                   <span className="text-zinc-300">Request Review</span>
-                  <span className="text-indigo-400 font-semibold">2-3 business days</span>
+                  <span className="text-zinc-200 font-semibold">2-3 business days</span>
                 </div>
                 <div className="flex justify-between items-center pb-3 border-b border-white/10">
                   <span className="text-zinc-300">Refund Processing</span>
-                  <span className="text-indigo-400 font-semibold">5-10 business days</span>
+                  <span className="text-zinc-200 font-semibold">5-10 business days</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-zinc-300">Bank/Card Processing</span>
-                  <span className="text-indigo-400 font-semibold">3-5 business days</span>
+                  <span className="text-zinc-200 font-semibold">3-5 business days</span>
                 </div>
               </div>
 
@@ -203,17 +203,17 @@ export default function RefundPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">6. Subscription Cancellations</h2>
             
-            <h3 className="text-xl font-semibold mb-3 text-indigo-400">6.1 Monthly Subscriptions</h3>
+            <h3 className="text-xl font-semibold mb-3 text-zinc-200">6.1 Monthly Subscriptions</h3>
             <p className="text-zinc-300 leading-relaxed mb-4">
               You can cancel your monthly subscription at any time. You'll continue to have access until the end of your current billing period. No refunds are provided for partial months.
             </p>
 
-            <h3 className="text-xl font-semibold mb-3 text-indigo-400">6.2 Annual Subscriptions</h3>
+            <h3 className="text-xl font-semibold mb-3 text-zinc-200">6.2 Annual Subscriptions</h3>
             <p className="text-zinc-300 leading-relaxed mb-4">
               Annual subscriptions may be eligible for pro-rated refunds if canceled within the first 14 days. After 14 days, you'll retain access until the end of your subscription period, but no refund will be issued.
             </p>
 
-            <h3 className="text-xl font-semibold mb-3 text-indigo-400">6.3 How to Cancel</h3>
+            <h3 className="text-xl font-semibold mb-3 text-zinc-200">6.3 How to Cancel</h3>
             <p className="text-zinc-300 leading-relaxed">
               To cancel your subscription:
             </p>
@@ -229,17 +229,17 @@ export default function RefundPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">7. Special Cases</h2>
             
-            <h3 className="text-xl font-semibold mb-3 text-indigo-400">7.1 Technical Issues</h3>
+            <h3 className="text-xl font-semibold mb-3 text-zinc-200">7.1 Technical Issues</h3>
             <p className="text-zinc-300 leading-relaxed mb-4">
               If you experience technical issues preventing you from using the service, please contact support first. We'll work to resolve the issue. If we cannot resolve it within a reasonable timeframe, you may be eligible for a full refund.
             </p>
 
-            <h3 className="text-xl font-semibold mb-3 text-indigo-400">7.2 Unauthorized Charges</h3>
+            <h3 className="text-xl font-semibold mb-3 text-zinc-200">7.2 Unauthorized Charges</h3>
             <p className="text-zinc-300 leading-relaxed mb-4">
-              If you notice unauthorized charges on your account, contact us immediately at <a href="mailto:security@example.com" className="text-indigo-400 hover:text-indigo-300 underline">security@example.com</a>. We'll investigate and process a full refund if the charges are confirmed as unauthorized.
+              If you notice unauthorized charges on your account, contact us immediately at <a href="mailto:ji569514123@gmail.com" className="text-zinc-200 hover:text-white underline">ji569514123@gmail.com</a>. We'll investigate and process a full refund if the charges are confirmed as unauthorized.
             </p>
 
-            <h3 className="text-xl font-semibold mb-3 text-indigo-400">7.3 Service Changes</h3>
+            <h3 className="text-xl font-semibold mb-3 text-zinc-200">7.3 Service Changes</h3>
             <p className="text-zinc-300 leading-relaxed">
               If we make significant changes to the service that materially affect your subscription, you may request a pro-rated refund within 30 days of the change notification.
             </p>
@@ -293,22 +293,22 @@ export default function RefundPage() {
             </p>
             <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-6">
               <p className="text-zinc-300 mb-2">
-                <strong>Refund Requests:</strong> <a href="mailto:refunds@example.com" className="text-indigo-400 hover:text-indigo-300 underline">refunds@example.com</a>
+                <strong>Refund Requests:</strong> <a href="mailto:ji569514123@gmail.com" className="text-zinc-200 hover:text-white underline">ji569514123@gmail.com</a>
               </p>
               <p className="text-zinc-300 mb-2">
-                <strong>General Support:</strong> <a href="mailto:support@example.com" className="text-indigo-400 hover:text-indigo-300 underline">support@example.com</a>
+                <strong>General Support:</strong> <a href="mailto:ji569514123@gmail.com" className="text-zinc-200 hover:text-white underline">ji569514123@gmail.com</a>
               </p>
               <p className="text-zinc-300">
-                <strong>Address:</strong> [Your Company Address]
+                <strong>Official Website:</strong> <a href="https://dufran.CN" target="_blank" rel="noopener noreferrer" className="text-zinc-200 hover:text-white underline">dufran.CN</a>
               </p>
             </div>
           </section>
 
           {/* Satisfaction Guarantee */}
-          <section className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-lg p-8 text-center">
-            <h2 className="text-2xl font-semibold mb-4">Our Satisfaction Guarantee</h2>
+          <section className="bg-zinc-800/20 border border-white/5 rounded-lg p-8 text-center">
+            <h2 className="text-2xl font-semibold mb-4 text-white">Our Satisfaction Guarantee</h2>
             <p className="text-zinc-300 leading-relaxed max-w-2xl mx-auto">
-              We're committed to providing excellent service. If you're not satisfied within the first 14 days, we'll work with you to make it right or provide a full refund. Your satisfaction is our priority.
+              At 2node, we're committed to providing excellent service. If you're not satisfied within the first 14 days, we'll work with you to make it right or provide a full refund. Your satisfaction is our priority.
             </p>
           </section>
         </div>

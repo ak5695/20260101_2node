@@ -69,14 +69,12 @@ export default function Page() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="flex flex-col items-center justify-center gap-3 mb-8 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+          <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-lg shadow-white/5 border border-white/10">
+            <span className="text-2xl font-black text-black tracking-tighter">2node</span>
           </div>
-          <h1 className="font-bold text-3xl text-white">Welcome Back</h1>
-          <p className="text-zinc-400 text-sm">
-            Sign in to continue to your workspace
+          <h1 className="font-bold text-3xl text-white">Welcome to 2node</h1>
+          <p className="text-zinc-400 text-sm italic tracking-wide">
+            Connected thinking starts here
           </p>
         </div>
 
@@ -130,7 +128,7 @@ export default function Page() {
           <p className="mt-6 text-center text-zinc-400 text-sm">
             Don't have an account?{" "}
             <Link
-              className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+              className="font-semibold text-zinc-100 hover:text-white transition-colors underline underline-offset-4 decoration-white/20 hover:decoration-white"
               href="/register"
             >
               Sign up for free
