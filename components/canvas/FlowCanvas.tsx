@@ -184,8 +184,8 @@ function FlowInnerComponent({ workspaceId }: { workspaceId: string }) {
     const finalX = nodes.length > 0 ? nodes[nodes.length - 1].position.x : centerX - 160;
 
     const tempId = `temp-${Date.now()}`;
-    const simulatedSummaryQuestion = summaryData?.summaryQuestion || (initialQuestion.substring(0, 50) + (initialQuestion.length > 50 ? '...' : ''));
-    const simulatedSummaryAnswer = summaryData?.summaryAnswer || (cleanedInitialAnswer.substring(0, 100) + (cleanedInitialAnswer.length > 100 ? '...' : ''));
+    const simulatedSummaryQuestion = summaryData?.summaryQuestion || (initialQuestion ? (initialQuestion.substring(0, 50) + (initialQuestion.length > 50 ? '...' : '')) : '新节点');
+    const simulatedSummaryAnswer = summaryData?.summaryAnswer || (cleanedInitialAnswer ? (cleanedInitialAnswer.substring(0, 100) + (cleanedInitialAnswer.length > 100 ? '...' : '')) : '');
     const chatId = summaryData?.chatId;
 
     // 3. Focus on the upcoming node position
@@ -201,8 +201,8 @@ function FlowInnerComponent({ workspaceId }: { workspaceId: string }) {
         selected: true,
         data: { 
           summaryQuestion: simulatedSummaryQuestion,
-          summaryAnswer: initialAnswer ? simulatedSummaryAnswer : "提炼中...",
-          fullQuestion: initialQuestion,
+          summaryAnswer: initialAnswer ? simulatedSummaryAnswer : (initialQuestion === 'New Question' || !initialQuestion ? "双击编辑内容" : "提炼中..."),
+          fullQuestion: initialQuestion === 'New Question' ? '' : initialQuestion,
           fullAnswer: initialAnswer,
           highlights: [],
           chatId,
@@ -218,8 +218,8 @@ function FlowInnerComponent({ workspaceId }: { workspaceId: string }) {
             positionX: finalX,
             positionY: nextY,
             summaryQuestion: simulatedSummaryQuestion,
-            summaryAnswer: simulatedSummaryAnswer,
-            fullQuestion: initialQuestion,
+            summaryAnswer: initialAnswer ? simulatedSummaryAnswer : (initialQuestion === 'New Question' || !initialQuestion ? "双击编辑内容" : "提炼中..."),
+            fullQuestion: initialQuestion === 'New Question' ? '' : initialQuestion,
             fullAnswer: initialAnswer,
             highlights: [],
             chatId,
@@ -253,10 +253,8 @@ function FlowInnerComponent({ workspaceId }: { workspaceId: string }) {
            } : n));
         }, 5000);
 
-        // 6. Trigger streaming
-        if (initialQuestion === 'New Question' && !initialAnswer) {
-          streamAIAnswer(newNodeResult.id, initialQuestion);
-        } else if (summaryData?.isStreamingPromotion) {
+        // 6. Trigger streaming ONLY if it's a context-aware promotion or child creation
+        if (summaryData?.isStreamingPromotion) {
           streamAIAnswer(newNodeResult.id, initialQuestion, initialAnswer);
         }
 
