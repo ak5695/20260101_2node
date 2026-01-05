@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
+import { SWRProvider } from "@/components/swr-provider";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://2node.ai"),
@@ -79,7 +80,11 @@ export default function RootLayout({
           enableSystem
         >
           <Toaster position="top-center" />
-          <SessionProvider>{children}</SessionProvider>
+          <SessionProvider>
+            <SWRProvider>
+              {children}
+            </SWRProvider>
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>

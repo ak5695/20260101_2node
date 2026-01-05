@@ -170,7 +170,13 @@ export async function getChatsByUserId({
 
     const query = (whereCondition?: SQL<any>) =>
       db
-        .select()
+        .select({
+          id: chat.id,
+          createdAt: chat.createdAt,
+          title: chat.title,
+          userId: chat.userId,
+          visibility: chat.visibility
+        })
         .from(chat)
         .where(
           whereCondition
@@ -184,7 +190,7 @@ export async function getChatsByUserId({
 
     if (startingAfter) {
       const [selectedChat] = await db
-        .select()
+        .select({ createdAt: chat.createdAt })
         .from(chat)
         .where(eq(chat.id, startingAfter))
         .limit(1);
@@ -199,7 +205,7 @@ export async function getChatsByUserId({
       filteredChats = await query(gt(chat.createdAt, selectedChat.createdAt));
     } else if (endingBefore) {
       const [selectedChat] = await db
-        .select()
+        .select({ createdAt: chat.createdAt })
         .from(chat)
         .where(eq(chat.id, endingBefore))
         .limit(1);
@@ -621,7 +627,16 @@ export async function getWorkspace(id: string) {
 
 export async function getWorkspacesByUserId(userId: string) {
   try {
-    return await db.select().from(workspace).where(eq(workspace.userId, userId)).orderBy(desc(workspace.createdAt));
+    return await db
+      .select({
+        id: workspace.id,
+        name: workspace.name,
+        createdAt: workspace.createdAt
+      })
+      .from(workspace)
+      .where(eq(workspace.userId, userId))
+      .orderBy(desc(workspace.createdAt))
+      .limit(50); // 💡 只加载最近 50 个工作空间，且不携带沉重的 settings 字段
   } catch (error) {
     console.error("Failed to get workspaces by user id:", error);
     return [];

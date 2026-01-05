@@ -7,78 +7,130 @@ export interface WorkspaceData {
   nodes: Node[];
   edges: Edge[];
   viewport?: { x: number; y: number; zoom: number };
-  timestamp?: number; // When this data was cached
+  timestamp?: number; 
 }
 
+// 采用更严格的全局单例模式，防止 HMR 导致多实例
+const GLOBAL_CACHE_KEY = '__2NODE_WORKSPACE_CACHE__';
+const GLOBAL_PENDING_KEY = '__2NODE_PENDING_FETCHES__';
+
+if (!(global as any)[GLOBAL_CACHE_KEY]) {
+    (global as any)[GLOBAL_CACHE_KEY] = new Map<string, WorkspaceData>();
+}
+if (!(global as any)[GLOBAL_PENDING_KEY]) {
+    (global as any)[GLOBAL_PENDING_KEY] = new Map<string, Promise<WorkspaceData | null>>();
+}
+
+const cacheMap: Map<string, WorkspaceData> = (global as any)[GLOBAL_CACHE_KEY];
+const pendingFetches: Map<string, Promise<WorkspaceData | null>> = (global as any)[GLOBAL_PENDING_KEY];
+
+const isBrowser = typeof window !== 'undefined';
+
 class WorkspaceCacheService {
-  private cache: Map<string, WorkspaceData> = new Map();
-  private pendingFetches: Map<string, Promise<WorkspaceData | null>> = new Map();
-
-  // Get cached workspace data
-  get(workspaceId: string): WorkspaceData | undefined {
-    const data = this.cache.get(workspaceId);
-    if (data) {
-      console.log(`[WorkspaceCache] Hit for ${workspaceId}: ${data.nodes.length} nodes`);
-    } else {
-      console.log(`[WorkspaceCache] Miss for ${workspaceId}`);
+  constructor() {
+    // Hydrate from localStorage on initialization (browser only)
+    if (isBrowser) {
+      try {
+        const saved = localStorage.getItem(GLOBAL_CACHE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          Object.entries(parsed).forEach(([id, data]: [string, any]) => {
+            cacheMap.set(id, data);
+          });
+          console.log(`[Cache] Restored ${cacheMap.size} workspaces from local storage`);
+        }
+      } catch (e) {
+        console.error("[Cache] Failed to hydrate workspace cache", e);
+      }
     }
-    return data;
   }
 
-  // Set workspace data in cache
+  private persist() {
+    if (isBrowser) {
+      try {
+        const data = Object.fromEntries(cacheMap.entries());
+        // Only keep the most recent entries if cache gets too large (> 4MB)
+        localStorage.setItem(GLOBAL_CACHE_KEY, JSON.stringify(data));
+      } catch (e) {
+        console.warn("[Cache] Storage limit reached, clearing old entries...");
+        // Fast cleanup: just keeping the mapping for now
+        this.clearAll();
+      }
+    }
+  }
+
+  get(workspaceId: string): WorkspaceData | undefined {
+    return cacheMap.get(workspaceId);
+  }
+
   set(workspaceId: string, data: WorkspaceData): void {
-    console.log(`[WorkspaceCache] Setting ${workspaceId}: ${data.nodes.length} nodes`);
-    this.cache.set(workspaceId, { ...data, timestamp: Date.now() });
+    cacheMap.set(workspaceId, { ...data, timestamp: Date.now() });
+    this.persist();
   }
 
-  // Check if workspace is cached
   has(workspaceId: string): boolean {
-    return this.cache.has(workspaceId);
+    return cacheMap.has(workspaceId);
   }
 
-  // Prefetch workspace data (deduped)
+  // 核心去重抓取逻辑：确保绝对原子性，防止微秒级竞争
   async prefetch(
     workspaceId: string, 
     fetcher: (id: string) => Promise<WorkspaceData | null>
-  ): Promise<void> {
-    // Already cached
-    if (this.cache.has(workspaceId)) {
-      console.log(`[WorkspaceCache] Prefetch skip (cached): ${workspaceId}`);
-      return;
+  ): Promise<WorkspaceData | null> {
+    const now = Date.now();
+    
+    // 1. 如果已有新鲜缓存（15秒内），直接返回
+    const existing = cacheMap.get(workspaceId);
+    if (existing && existing.timestamp && (now - existing.timestamp < 15000)) {
+      return existing;
     }
     
-    // Already fetching
-    if (this.pendingFetches.has(workspaceId)) {
-      console.log(`[WorkspaceCache] Prefetch skip (pending): ${workspaceId}`);
-      return;
+    // 2. 检查排队锁（Pending Promise）
+    const inProgress = pendingFetches.get(workspaceId);
+    if (inProgress) {
+      return inProgress;
     }
 
-    console.log(`[WorkspaceCache] Prefetching ${workspaceId}...`);
-    const fetchPromise = fetcher(workspaceId)
-      .then((data) => {
+    // 3. 核心改进：同步创建一个 Promise 占位符并立即存入 Map
+    let resolveRef: (val: WorkspaceData | null) => void = () => {};
+    const fetchPromise = new Promise<WorkspaceData | null>((resolve) => {
+      resolveRef = resolve;
+    });
+    
+    pendingFetches.set(workspaceId, fetchPromise);
+
+    // 4. 在后台发起真正的网络获取
+    (async () => {
+      try {
+        const data = await fetcher(workspaceId);
         if (data) {
-          console.log(`[WorkspaceCache] Prefetch success for ${workspaceId}: ${data.nodes.length} nodes`);
-          this.cache.set(workspaceId, data);
+          const dataWithTime = { ...data, timestamp: now };
+          cacheMap.set(workspaceId, dataWithTime);
+          this.persist(); // 持久化到本地
+          resolveRef(dataWithTime);
+        } else {
+          resolveRef(null);
         }
-        return data;
-      })
-      .finally(() => {
-        this.pendingFetches.delete(workspaceId);
-      });
+      } catch (err) {
+        console.error(`[CacheLock] Fetch failed for ${workspaceId}:`, err);
+        resolveRef(null);
+      } finally {
+        pendingFetches.delete(workspaceId);
+      }
+    })();
 
-    this.pendingFetches.set(workspaceId, fetchPromise);
+    return fetchPromise;
   }
 
-  // Clear a specific workspace from cache
   clear(workspaceId: string): void {
-    this.cache.delete(workspaceId);
+    cacheMap.delete(workspaceId);
+    this.persist();
   }
 
-  // Clear entire cache
   clearAll(): void {
-    this.cache.clear();
+    cacheMap.clear();
+    if (isBrowser) localStorage.removeItem(GLOBAL_CACHE_KEY);
   }
 }
 
-// Singleton instance
 export const workspaceCache = new WorkspaceCacheService();

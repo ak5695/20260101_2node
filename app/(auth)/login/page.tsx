@@ -70,7 +70,7 @@ export default function Page() {
         {/* Header */}
         <div className="flex flex-col items-center justify-center gap-3 mb-8 text-center">
           <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-lg shadow-white/5 border border-white/10">
-            <span className="text-2xl font-black text-black tracking-tighter">2node</span>
+            <span className="text-3xl font-black text-black">2N</span>
           </div>
           <h1 className="font-bold text-3xl text-white">Welcome to 2node</h1>
           <p className="text-zinc-400 text-sm italic tracking-wide">

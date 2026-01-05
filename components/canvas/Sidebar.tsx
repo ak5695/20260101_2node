@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ResizableBox } from 'react-resizable';
 import 'react-resizable/css/styles.css'; 
+import dynamic from 'next/dynamic';
 
 import type { User } from 'next-auth';
 import { SidebarHistory } from '@/components/sidebar-history';
@@ -40,12 +41,24 @@ import { getThreadMessagesAction, createWorkspaceAction, getChatsAction } from '
 
 import { DEFAULT_CHAT_MODEL } from '@/lib/ai/models';
 
-import { Chat } from '@/components/chat';
+// 动态导入重型组件，减少初始加载大小
+const Chat = dynamic(() => import('@/components/chat').then(mod => mod.Chat), {
+  loading: () => <div className="h-full flex items-center justify-center text-zinc-500">加载中...</div>,
+  ssr: false
+});
+
+const SidebarWorkspaceHistory = dynamic(
+  () => import('@/components/sidebar-workspace-history').then(mod => mod.SidebarWorkspaceHistory),
+  {
+    loading: () => <div className="h-full flex items-center justify-center text-zinc-500">加载中...</div>,
+    ssr: false
+  }
+);
+
 import { convertToUIMessages } from '@/lib/utils';
 import { ChatMessage } from '@/lib/types';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { VisibilitySelector } from '@/components/visibility-selector';
-import { SidebarWorkspaceHistory } from '@/components/sidebar-workspace-history';
 import { messageCache } from '@/lib/message-cache';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -54,18 +67,23 @@ interface SidebarProps {
   workspaceId: string;
   user: User | undefined;
   onPromoteToNode?: (content: string, summary?: { summaryQuestion: string; summaryAnswer: string; }) => Promise<void>;
+  initialWorkspaces?: any[];
 }
 
 type TabType = 'history' | 'workspaces' | 'settings';
 
-export function Sidebar({ workspaceId, user, onPromoteToNode }: SidebarProps) {
+export function Sidebar({ workspaceId, user, onPromoteToNode, initialWorkspaces }: SidebarProps) {
   const params = useParams();
   const router = useRouter();
+  const pathname = usePathname();
   const isMobile = useIsMobile();
+  const searchParams = useSearchParams();
   const urlId = params?.id as string | undefined;
 
+  // 从 URL 读取当前激活的 Tab（添加 null 检查）
+  const activeTab = (searchParams?.get('tab') as TabType) || 'history';
+
   const [collapsed, setCollapsed] = useState(false);
-  const [activeTab__internal, setActiveTab__internal] = useState<TabType>('history');
   const [sidebarWidth, setSidebarWidth] = useState(500); 
   const [isResizing, setIsResizing] = useState(false);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(urlId || null);
@@ -99,7 +117,7 @@ export function Sidebar({ workspaceId, user, onPromoteToNode }: SidebarProps) {
   useEffect(() => {
     setActiveThreadId(urlId || null);
     if (urlId) {
-      setActiveTab__internal('history');
+      // activeTab is now derived from URL, no need to set it
       setChatViewMode('chat');
       if (!isMobile) setCollapsed(false);
     }
@@ -161,29 +179,29 @@ export function Sidebar({ workspaceId, user, onPromoteToNode }: SidebarProps) {
   // Handle request-node-detail from canvas (double-click)
   useEffect(() => {
     const handleRequestNodeDetail = () => {
-      setActiveTab__internal('workspaces');
+      // activeTab will be set via URL parameter
       setCollapsed(false);
     };
     window.addEventListener('request-node-detail', handleRequestNodeDetail);
     return () => window.removeEventListener('request-node-detail', handleRequestNodeDetail);
   }, []);
 
-  // Try to load last conversation if no ID provided (Default open last conversation)
+  // Try to load last conversation context but don't force a hard redirect
   useEffect(() => {
-    if (!urlId && activeTab__internal === 'history') {
+    if (!urlId && activeTab === 'history') {
       const fetchLastChat = async () => {
         try {
+          // 如果列表里已经有数据或正在加载，不要轻易触发
           const result = await getChatsAction();
-          // result is { chats: Chat[], hasMore: boolean } or []
           const chats = Array.isArray(result) ? result : result.chats;
           
           if (chats && chats.length > 0) {
             const lastChat = chats[0];
             setActiveThreadId(lastChat.id);
             setChatViewMode('chat');
-            router.push(`/chat/${lastChat.id}`);
+            // 💡 优化：不再使用 router.push 强制跳转，这会触发整个页面的重新渲染
+            // 只有当用户显式点击时才进行重定向
           } else {
-            // No chats, show new chat as fallback
             setChatViewMode('chat');
           }
         } catch (e) {
@@ -193,7 +211,8 @@ export function Sidebar({ workspaceId, user, onPromoteToNode }: SidebarProps) {
       
       fetchLastChat();
     }
-  }, [urlId, activeTab__internal, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlId]); // ✅ 只依赖 urlId，减少重运行次数
 
   // Handle node deletion from sidebar
   useEffect(() => {
@@ -226,17 +245,19 @@ export function Sidebar({ workspaceId, user, onPromoteToNode }: SidebarProps) {
         setActiveTab('history');
         setChatViewMode('chat');
         
-        // Navigate to new chat with query parameter
-        router.push(`/?query=${encodeURIComponent(query)}`);
+        // Navigate to new chat with query parameter and tab
+        router.push(`/?tab=history&query=${encodeURIComponent(query)}`);
       }
     };
     window.addEventListener('request-chat-query', handleAskAIRequest);
     return () => window.removeEventListener('request-chat-query', handleAskAIRequest);
   }, [router]);
 
-  // Tab control - Force expansion
+  // Tab control - Use URL parameters
   const setActiveTab = (tab: TabType) => {
-    setActiveTab__internal(tab);
+    if (!pathname) return; // 防止 pathname 为 undefined
+    const newUrl = `${pathname}?tab=${tab}`;
+    router.push(newUrl, { scroll: false });
     setCollapsed(false);
   };
 
@@ -259,7 +280,7 @@ export function Sidebar({ workspaceId, user, onPromoteToNode }: SidebarProps) {
      setChatId(crypto.randomUUID());
      setActiveTab('history');
      setChatViewMode('chat');
-     router.push('/');
+     router.push('/?tab=history');
   };
 
   const handleNewWorkspace = async () => {
@@ -273,8 +294,8 @@ export function Sidebar({ workspaceId, user, onPromoteToNode }: SidebarProps) {
           detail: { workspace: ws } 
         }));
         
-        // Navigate to new workspace
-        router.push(`/canvas/${ws.id}`);
+        // Navigate to new workspace and set tab
+        router.push(`/workspaces/${ws.id}?tab=workspaces`);
         toast.success('新空间已创建');
       }
     } catch (e) {
@@ -331,19 +352,19 @@ export function Sidebar({ workspaceId, user, onPromoteToNode }: SidebarProps) {
           <button
             key={item.id}
             onClick={() => {
+              const newTab = item.id as TabType;
+              
               if (collapsed && !isMobile) {
-                setActiveTab__internal(item.id as TabType);
-                setCollapsed(false);
-              } else if (!isMobile && activeTab__internal === item.id) {
+                setActiveTab(newTab);
+              } else if (!isMobile && activeTab === item.id) {
                 setCollapsed(true);
               } else {
-                setActiveTab__internal(item.id as TabType);
-                if (collapsed) setCollapsed(false);
+                setActiveTab(newTab);
               }
             }}
             className={clsx(
               'p-2 rounded-xl transition-all relative group',
-              activeTab__internal === item.id ? 'text-white bg-white/10' : 'text-[#858585] hover:text-[#e0e0e0] hover:bg-white/5'
+              activeTab === item.id ? 'text-white bg-white/10' : 'text-[#858585] hover:text-[#e0e0e0] hover:bg-white/5'
             )}
             title={item.label}
           >
@@ -440,13 +461,13 @@ export function Sidebar({ workspaceId, user, onPromoteToNode }: SidebarProps) {
                 </button>
               )}
               <h2 className="text-sm font-bold text-[#e0e0e0] uppercase tracking-widest truncate max-w-[100px] sm:max-w-none">
-                {activeTab__internal === 'history' 
+                {activeTab === 'history' 
                   ? (chatViewMode === 'list' ? '对话历史' : '对话') 
-                  : navItems.find(i => i.id === activeTab__internal)?.label}
+                  : navItems.find(i => i.id === activeTab)?.label}
               </h2>
             </div>
             
-            {activeTab__internal === 'history' && (
+            {activeTab === 'history' && (
               <div className="flex items-center gap-2">
                  {chatViewMode === 'chat' ? (
                    <>
@@ -486,7 +507,7 @@ export function Sidebar({ workspaceId, user, onPromoteToNode }: SidebarProps) {
               </div>
             )}
 
-            {activeTab__internal === 'workspaces' && (
+            {activeTab === 'workspaces' && (
               <div className="flex items-center gap-2">
                  <button 
                    onClick={handleNewWorkspace}
@@ -500,7 +521,7 @@ export function Sidebar({ workspaceId, user, onPromoteToNode }: SidebarProps) {
           </div>
 
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            {activeTab__internal === 'history' && (
+            {activeTab === 'history' && (
                <div className="h-full w-full overflow-hidden flex flex-col">
                   {chatViewMode === 'chat' ? (
                     <div className="flex-1 overflow-hidden">
@@ -537,13 +558,13 @@ export function Sidebar({ workspaceId, user, onPromoteToNode }: SidebarProps) {
                </div>
             )}
 
-            {activeTab__internal === 'workspaces' && (
+            {activeTab === 'workspaces' && (
               <div className="flex-1 flex flex-col min-h-0">
-                 <SidebarWorkspaceHistory />
+                 <SidebarWorkspaceHistory initialWorkspaces={initialWorkspaces} />
               </div>
             )}
 
-            {activeTab__internal === 'settings' && (
+            {activeTab === 'settings' && (
               <div className="p-6 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="space-y-4">
                   <h3 className="text-[10px] font-bold text-[#858585] uppercase tracking-[0.2em]">Canvas Settings</h3>

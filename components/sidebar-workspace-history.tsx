@@ -27,8 +27,13 @@ interface WorkspaceNode {
 
 type ViewMode = 'workspaces' | 'nodes' | 'detail';
 
-export function SidebarWorkspaceHistory() {
-  const { data, mutate, isLoading } = useSWR("/api/workspaces", fetcher);
+export function SidebarWorkspaceHistory({ initialWorkspaces }: { initialWorkspaces?: any[] }) {
+  const { data, mutate, isLoading } = useSWR("/api/workspaces", fetcher, {
+    fallbackData: initialWorkspaces ? { workspaces: initialWorkspaces } : undefined,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    dedupingInterval: 10000,
+  });
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isDeletingNode, setIsDeletingNode] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -62,7 +67,7 @@ export function SidebarWorkspaceHistory() {
       const { nodeId, workspaceId } = event.detail;
       
       if (workspaceId && workspaceId !== currentWorkspaceId) {
-        router.push(`/canvas/${workspaceId}`);
+        router.push(`/workspaces/${workspaceId}`);
         return;
       }
 
@@ -129,7 +134,7 @@ export function SidebarWorkspaceHistory() {
     
     // If we're viewing this workspace, navigate away immediately
     if (currentWorkspaceId === workspaceId) {
-      router.push('/canvas');
+      router.push('/workspaces');
     }
     
     toast.success("工作空间已删除");
@@ -218,8 +223,29 @@ export function SidebarWorkspaceHistory() {
     }
   };
 
+  // Helpers for data conversion
+  const formatFromReactFlow = useCallback((n: any) => ({
+    id: n.id,
+    type: n.type || 'chatNode',
+    summaryQuestion: n.type === 'textNode' ? (n.data.text || '') : (n.data.summaryQuestion || ''),
+    summaryAnswer: n.type === 'textNode' ? '' : (n.data.summaryAnswer || ''),
+    fullQuestion: n.type === 'textNode' ? (n.data.text || '') : (n.data.fullQuestion || ''),
+    fullAnswer: n.type === 'textNode' ? '' : (n.data.fullAnswer || ''),
+    chatId: (n.data as any).chatId,
+  }), []);
+
+  const formatFromDB = useCallback((n: any) => ({
+    id: n.id,
+    type: n.type || 'chatNode',
+    summaryQuestion: n.summaryQuestion || '',
+    summaryAnswer: n.summaryAnswer || '',
+    fullQuestion: n.fullQuestion || '',
+    fullAnswer: n.fullAnswer || '',
+    chatId: (n as any).chatId || (n.data as any)?.chatId,
+  }), []);
+
   // Select workspace and load its nodes
-  const handleSelectWorkspace = useCallback(async (ws: { id: string; name: string }) => {
+  const handleSelectWorkspace = useCallback((ws: { id: string; name: string }) => {
     // If clicking the current workspace while already in nodes view, just ensure the view mode is correct
     if (selectedWorkspace?.id === ws.id && viewMode === 'nodes') {
       return;
@@ -234,47 +260,23 @@ export function SidebarWorkspaceHistory() {
     
     // Navigate immediately for instant feedback
     if (currentWorkspaceId !== ws.id) {
-      router.push(`/canvas/${ws.id}`);
+      router.push(`/workspaces/${ws.id}?tab=workspaces`);
     }
-    
-    const formatFromReactFlow = (n: any) => ({
-      id: n.id,
-      type: n.type || 'chatNode',
-      summaryQuestion: n.type === 'textNode' ? (n.data.text || '') : (n.data.summaryQuestion || ''),
-      summaryAnswer: n.type === 'textNode' ? '' : (n.data.summaryAnswer || ''),
-      fullQuestion: n.type === 'textNode' ? (n.data.text || '') : (n.data.fullQuestion || ''),
-      fullAnswer: n.type === 'textNode' ? '' : (n.data.fullAnswer || ''),
-      chatId: (n.data as any).chatId,
-    });
+  }, [selectedWorkspace?.id, viewMode, currentWorkspaceId, router]);
 
-    const formatFromDB = (n: any) => ({
-      id: n.id,
-      type: n.type || 'chatNode',
-      summaryQuestion: n.summaryQuestion || '',
-      summaryAnswer: n.summaryAnswer || '',
-      fullQuestion: n.fullQuestion || '',
-      fullAnswer: n.fullAnswer || '',
-      chatId: (n as any).chatId || (n.data as any)?.chatId,
-    });
+  // 🚀 Optimized Global Data Fetching Effect
+  useEffect(() => {
+    if (!currentWorkspaceId) return;
 
-    // Check cache first for instant display
-    const cached = workspaceCache.get(ws.id);
-    if (cached && cached.nodes.length > 0) {
-      const cachedNodes: WorkspaceNode[] = cached.nodes.map(formatFromReactFlow);
-      setNodes(cachedNodes);
-      setLoadingNodes(false);
-      
-      // Background refresh if data is stale (>30s)
-      const cacheAge = Date.now() - (cached.timestamp || 0);
-      if (cacheAge > 30000) {
-        getWorkspaceDataAction(ws.id).then(wsData => {
-          if (lastRequestedWorkspaceId.current !== ws.id) return;
-          if (wsData) {
-            const freshNodes: WorkspaceNode[] = wsData.nodes.map(formatFromDB);
-            setNodes(freshNodes);
-            
-            // Update cache
-            const freshReactFlowNodes = wsData.nodes.map(n => ({
+    const timer = setTimeout(async () => {
+      setLoadingNodes(true);
+      try {
+        const data = await workspaceCache.prefetch(currentWorkspaceId, async (id) => {
+          const wsData = await getWorkspaceDataAction(id);
+          if (!wsData) return null;
+          
+          return {
+            nodes: wsData.nodes.map(n => ({
               id: n.id,
               type: n.type || 'chatNode',
               position: { x: n.positionX, y: n.positionY },
@@ -288,8 +290,8 @@ export function SidebarWorkspaceHistory() {
                     highlights: n.highlights || [],
                     chatId: (n as any).chatId,
                   },
-            }));
-            const freshEdges = wsData.edges.map(e => ({
+            })),
+            edges: wsData.edges.map(e => ({
               id: e.id,
               source: e.sourceNodeId,
               target: e.targetNodeId,
@@ -298,41 +300,32 @@ export function SidebarWorkspaceHistory() {
               type: 'custom',
               animated: true,
               markerEnd: { type: MarkerType.ArrowClosed, color: '#ffffff' },
-            }));
-            
-            workspaceCache.set(ws.id, {
-              nodes: freshReactFlowNodes,
-              edges: freshEdges,
-              viewport: (wsData.workspace.settings as any)?.viewport,
-            });
-          }
-        }).catch(() => {});
-      }
-      return;
-    }
+            })),
+            viewport: (wsData.workspace.settings as any)?.viewport,
+            timestamp: Date.now()
+          };
+        });
 
-    // No cache - show empty state immediately, load in background
-    setNodes([]);
-    setLoadingNodes(true);
-    
-    getWorkspaceDataAction(ws.id).then(wsData => {
-      if (lastRequestedWorkspaceId.current !== ws.id) return;
-      if (wsData) {
-        if (wsData.workspace?.name && selectedWorkspace?.id === ws.id && selectedWorkspace?.name !== wsData.workspace.name) {
-          setSelectedWorkspace({ id: ws.id, name: wsData.workspace.name });
+        if (data && data.nodes) {
+          setNodes(data.nodes.map(formatFromReactFlow));
+        } else {
+          setNodes([]);
         }
-        const nodesList: WorkspaceNode[] = wsData.nodes.map(formatFromDB);
-        setNodes(nodesList);
-      } else {
+      } catch (err) {
+        console.error("Sidebar fetch failed:", err);
         setNodes([]);
+      } finally {
+        setLoadingNodes(false);
       }
-      setLoadingNodes(false);
-    }).catch(error => {
-      console.error('Failed to load nodes:', error);
+    }, 50);
+
+    return () => {
+      clearTimeout(timer);
+      // 如果切换了，立刻清理当前列表，防止闪烁旧数据
       setNodes([]);
-      setLoadingNodes(false);
-    });
-  }, [router, selectedWorkspace, viewMode, currentWorkspaceId]);
+    };
+  }, [currentWorkspaceId, formatFromReactFlow]); 
+ // ✅ Only depend on the ID to avoid loops
  
    // Auto-select current workspace from URL
    useEffect(() => {
@@ -413,7 +406,7 @@ export function SidebarWorkspaceHistory() {
     lastRequestedWorkspaceId.current = ws.id;
     
     // Navigate immediately
-    router.push(`/canvas/${ws.id}`);
+    router.push(`/workspaces/${ws.id}`);
     
     // Load data in background using existing logic
     handleSelectWorkspace(ws);
@@ -739,10 +732,17 @@ export function SidebarWorkspaceHistory() {
                     className="group flex-col items-start py-3 h-auto border-b border-white/[0.03] last:border-0 pr-10"
                   >
                     <div className="flex items-start gap-2 w-full">
-                      <div className={`mt-1 p-1 rounded transition-colors ${
+                      <div 
+                        onClick={(e) => {
+                          if (node.chatId) {
+                            e.stopPropagation();
+                            router.push(`/chat/${node.chatId}`);
+                          }
+                        }}
+                        className={`mt-1 p-1 rounded transition-colors cursor-pointer z-10 ${
                         node.chatId 
-                          ? 'bg-blue-500/10 text-blue-400 group-hover:text-blue-300' 
-                          : 'bg-white/5 text-zinc-400 group-hover:text-white'
+                          ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300' 
+                          : 'bg-white/5 text-zinc-400'
                       }`}>
                         <MessageSquare size={12} className={node.chatId ? 'fill-current' : ''} />
                       </div>
@@ -831,6 +831,20 @@ export function SidebarWorkspaceHistory() {
               <ChevronRight size={20} />
             </button>
             
+            {/* Jump to Chat button if chatId exists */}
+            {selectedNode.chatId && (
+              <button
+                onClick={() => {
+                   router.push(`/chat/${selectedNode.chatId}`);
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 rounded-lg transition-all text-xs border border-blue-500/20 shadow-sm"
+                title="进入该会话"
+              >
+                <MessageSquarePlus size={14} />
+                <span className="font-medium">进入会话</span>
+              </button>
+            )}
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="p-1 rounded hover:bg-white/10 transition-colors text-zinc-500">

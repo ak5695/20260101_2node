@@ -10,6 +10,7 @@ import {
   uuid,
   varchar,
   real,
+  index, // 💡 引入索引组件
 } from "drizzle-orm/pg-core";
 
 export const user = pgTable("User", {
@@ -30,12 +31,13 @@ export const chat = pgTable("Chat", {
   visibility: varchar("visibility", { enum: ["public", "private"] })
     .notNull()
     .default("private"),
-});
+}, (table) => ({
+  userIdIdx: index("userId_idx").on(table.userId),
+  createdAtIdx: index("chat_createdAt_idx").on(table.createdAt),
+}));
 
 export type Chat = InferSelectModel<typeof chat>;
 
-// DEPRECATED: The following schema is deprecated and will be removed in the future.
-// Read the migration guide at https://chat-sdk.dev/docs/migration-guides/message-parts
 export const messageDeprecated = pgTable("Message", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   chatId: uuid("chatId")
@@ -57,7 +59,10 @@ export const message = pgTable("Message_v2", {
   parts: json("parts").notNull(),
   attachments: json("attachments").notNull(),
   createdAt: timestamp("createdAt").notNull(),
-});
+}, (table) => ({
+  chatIdIdx: index("chatId_idx").on(table.chatId),
+  msgCreatedAtIdx: index("msg_createdAt_idx").on(table.createdAt),
+}));
 
 export type DBMessage = InferSelectModel<typeof message>;
 

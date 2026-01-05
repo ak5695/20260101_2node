@@ -164,7 +164,7 @@ function CustomNodeComponent({ id, data, selected }: NodeProps<ChatNodeData>) {
         </div>
 
         {/* Answer Area */}
-        <div className="flex flex-col gap-1 relative pl-3 border-l-4 border-emerald-500/50">
+        <div className="flex flex-col gap-1 relative pl-3 border-l-4 border-emerald-500/50 min-h-[60px]">
           <div 
               ref={answerRef}
               className="text-[13px] text-zinc-300 leading-relaxed nodrag"
@@ -173,6 +173,22 @@ function CustomNodeComponent({ id, data, selected }: NodeProps<ChatNodeData>) {
                   {renderContent(data.summaryAnswer || "...", data.highlights)}
               </div>
           </div>
+          
+          {/* Jump to Chat indicator/button */}
+          {(data as any).chatId && (
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.location.href = `/chat/${(data as any).chatId}`;
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 rounded-lg transition-all text-[11px] border border-blue-500/20 shadow-sm font-medium z-50 pointer-events-auto cursor-pointer"
+              >
+                <Maximize2 size={12} />
+                进入对话
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

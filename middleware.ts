@@ -44,7 +44,7 @@ export const config = {
   matcher: [
     "/",
     "/chat/:id",
-    "/api/:path*",
+    "/workspaces/:id*",
     "/login",
     "/register",
 
@@ -53,7 +53,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     * - api/ (to prevent infinite redirect loops)
      */
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|api/).*)",
   ],
 };

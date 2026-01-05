@@ -5,6 +5,12 @@ import { Plus, LayoutDashboard, Maximize, Download, Image, FileCode, Undo2, Redo
 import { clsx } from 'clsx';
 import { useIsMobile } from '@/hooks/use-mobile';
 
+const vibrate = () => {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    navigator.vibrate(10);
+  }
+};
+
 interface DockProps {
   onAddNode: () => void;
   onAddText: () => void;
@@ -38,34 +44,43 @@ export function Dock({ onAddNode, onAddText, onTidyUp, onZoomToFit, zoomLevel, o
 
   if (!isVisible) return null;
 
+  // We want to use mobile layout if screen is below 'lg' (1024px)
+  const useMobileLayout = isMobile || (typeof window !== 'undefined' && window.innerWidth < 1024);
 
   return (
     <div className={clsx(
-      "absolute z-[100] bg-[#1e1e1e]/95 backdrop-blur-md border border-white/10 shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.19,1,0.22,1)]",
-      "top-4 right-4 flex flex-col items-center", // Mobile
-      "sm:top-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:flex-row sm:px-5 sm:gap-0 sm:h-12", // Desktop
-      isMobile ? (isExpanded ? "p-2 rounded-2xl" : "p-1 rounded-full") : "p-2 rounded-2xl"
+      "fixed z-[100] backdrop-blur-xl border transition-all duration-500 ease-[cubic-bezier(0.19,1,0.22,1)]",
+      "bottom-60 right-4 flex flex-col-reverse items-center w-12", // Mobile/Tablet: Centered stack above menu button
+      "lg:absolute lg:top-4 lg:left-1/2 lg:right-auto lg:-translate-x-1/2 lg:flex-row lg:px-5 lg:gap-0 lg:h-12 lg:bottom-auto lg:translate-y-0 lg:bg-[#1e1e1e]/95 lg:w-auto", // Desktop: Center-top
+      useMobileLayout 
+        ? (isExpanded ? "p-2 rounded-2xl bg-[#1e1e1e]/50 border-white/10" : "p-0 rounded-2xl bg-white/50 border-white/20") 
+        : "p-2 rounded-2xl"
     )}>
       {/* Mobile Toggle Button */}
-      {isMobile && (
+      {useMobileLayout && (
         <button
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={() => {
+            vibrate();
+            setIsExpanded(!isExpanded);
+          }}
           className={clsx(
-            "p-2 rounded-full transition-all duration-300",
-            isExpanded ? "bg-white/10 text-white rotate-180 mb-2" : "bg-zinc-100 text-zinc-900 shadow-lg shadow-black/20"
+            "size-12 rounded-2xl transition-all duration-300 flex items-center justify-center",
+            isExpanded ? "text-white rotate-180" : "text-black"
           )}
         >
-          {isExpanded ? <ChevronUp size={20} /> : <Plus size={20} />}
+          {isExpanded ? <ChevronDown size={24} /> : <Plus size={24} />}
         </button>
       )}
 
       {/* Tools Container */}
       <div className={clsx(
-        "flex items-center transition-all duration-500 overflow-hidden",
-        isMobile ? (isExpanded ? "flex-col opacity-100 max-h-[500px] gap-1" : "flex-col opacity-0 max-h-0") : "flex-row opacity-100 max-h-none"
+        "transition-all duration-500 overflow-hidden flex",
+        useMobileLayout 
+          ? (isExpanded ? "flex-col-reverse opacity-100 max-h-[500px] gap-2 mb-2" : "hidden opacity-0 max-h-0") 
+          : "flex-row opacity-100 max-h-none items-center"
       )}>
         <button
-          onClick={() => onAddNode()}
+          onClick={() => { vibrate(); onAddNode(); }}
           className="group relative p-2 rounded-lg text-[#e0e0e0] hover:bg-white/10 transition-all"
         >
           <Plus size={20} />
@@ -79,7 +94,7 @@ export function Dock({ onAddNode, onAddText, onTidyUp, onZoomToFit, zoomLevel, o
         </button>
 
         <button
-          onClick={() => onAddText()}
+          onClick={() => { vibrate(); onAddText(); }}
           className="group relative p-2 rounded-lg text-[#e0e0e0] hover:bg-white/10 transition-all"
         >
           <Type size={20} />
@@ -97,7 +112,7 @@ export function Dock({ onAddNode, onAddText, onTidyUp, onZoomToFit, zoomLevel, o
         {/* Undo/Redo */}
         <div className="flex flex-col sm:flex-row items-center gap-1">
           <button
-            onClick={onUndo}
+            onClick={() => { vibrate(); onUndo?.(); }}
             disabled={!canUndo}
             className={clsx(
               "group relative p-2 rounded-lg transition-all",
@@ -107,7 +122,7 @@ export function Dock({ onAddNode, onAddText, onTidyUp, onZoomToFit, zoomLevel, o
             <Undo2 size={18} />
           </button>
           <button
-            onClick={onRedo}
+            onClick={() => { vibrate(); onRedo?.(); }}
             disabled={!canRedo}
             className={clsx(
               "group relative p-2 rounded-lg transition-all",
@@ -121,14 +136,14 @@ export function Dock({ onAddNode, onAddText, onTidyUp, onZoomToFit, zoomLevel, o
         <div className="bg-white/10 mx-1 w-6 h-px my-1 sm:w-px sm:h-6 sm:my-0 sm:mx-1" />
 
         <button
-          onClick={onTidyUp}
+          onClick={() => { vibrate(); onTidyUp(); }}
           className="group relative p-2 rounded-lg text-[#e0e0e0] hover:bg-white/10 transition-all"
         >
           <LayoutDashboard size={20} />
         </button>
 
         <button
-          onClick={onZoomToFit}
+          onClick={() => { vibrate(); onZoomToFit(); }}
           className="group relative p-2 rounded-lg text-[#e0e0e0] hover:bg-white/10 transition-all"
         >
           <Maximize size={20} />
@@ -139,7 +154,7 @@ export function Dock({ onAddNode, onAddText, onTidyUp, onZoomToFit, zoomLevel, o
         {/* Export Button */}
         <div className="relative">
           <button
-            onClick={() => setShowExportMenu(!showExportMenu)}
+            onClick={() => { vibrate(); setShowExportMenu(!showExportMenu); }}
             className="group relative p-2 rounded-lg text-[#e0e0e0] hover:bg-white/10 transition-all"
           >
             <Download size={20} />

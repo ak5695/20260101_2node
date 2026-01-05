@@ -70,7 +70,8 @@ const PureChatItem = ({
     <SidebarMenuItem onMouseEnter={handleMouseEnter}>
       <SidebarMenuButton asChild isActive={isActive}>
         <Link 
-          href={`/chat/${chat.id}`} 
+          href={`/chat/${chat.id}`}
+          prefetch={true}
           onClick={() => {
             setIsClicked(true);
             setOpenMobile(false);

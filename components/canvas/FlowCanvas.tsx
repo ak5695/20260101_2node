@@ -13,17 +13,18 @@ import ReactFlow, {
   useReactFlow,
   Node,
   Edge,
-  Viewport,
   EdgeLabelRenderer,
   BaseEdge,
   MarkerType,
   ConnectionLineType,
+  Viewport,
   SelectionMode,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import debounce from 'lodash.debounce';
 import { sanitizeResponseJSON, stripPoliteFiller } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 import { Dock } from './Dock';
 import { CustomNode } from './CustomNode';
@@ -69,6 +70,7 @@ export type FlowChatNodeData = {
 };
 
 function FlowInnerComponent({ workspaceId }: { workspaceId: string }) {
+  const isMobile = useIsMobile();
   const nodeTypesMemo = useMemo(() => nodeTypes, []);
   const edgeTypesMemo = useMemo(() => edgeTypes, []);
   const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
@@ -450,86 +452,55 @@ function FlowInnerComponent({ workspaceId }: { workspaceId: string }) {
     async function loadData() {
         if (!workspaceId) return;
         
-        // Notify sidebar we are switching/loading removed, 
-        // handleNodesUpdated already ignores empty lists if it has cache.
-
-        // Check cache first for instant load
+        // 1. 检查缓存
         const cachedData = workspaceCache.get(workspaceId);
         if (cachedData && cachedData.nodes.length > 0) {
-            console.log(`[FlowCanvas] ID: ${workspaceId} - Loading from cache: ${cachedData.nodes.length} nodes`);
             setNodes(cachedData.nodes);
             setEdges(cachedData.edges);
-            
             if (isFirstLoad.current && cachedData.viewport) {
-                reactFlowInstance.setViewport(cachedData.viewport);
+                reactFlowInstance?.setViewport(cachedData.viewport);
                 isFirstLoad.current = false;
             }
-            
-            // Fetch fresh data in background (stale-while-revalidate)
-            getWorkspaceDataAction(workspaceId).then((data) => {
-                if (ignore) return;
-                if (data) {
-                    console.log(`[FlowCanvas] ID: ${workspaceId} - Background refresh: ${data.nodes.length} nodes from server`);
-                    const freshNodes = formatNodes(data.nodes);
-                    const freshEdges = formatEdges(data.edges);
-                    setNodes(freshNodes);
-                    setEdges(freshEdges);
-                    
-                    // Dispatch fresh nodes to sidebar handled by useEffect now
-
-                    // Update cache
-                    const settings = data.workspace.settings as any;
-                    workspaceCache.set(workspaceId, {
-                        nodes: freshNodes,
-                        edges: freshEdges,
-                        viewport: settings?.viewport,
-                    });
-                }
-            }).catch(() => {});
-            return;
-        } else if (cachedData && cachedData.nodes.length === 0) {
-            console.log(`[FlowCanvas] ID: ${workspaceId} - Cache contains 0 nodes, forcing full fetch.`);
+            // 2. 检查 TTL (20秒内不重复刷)
+            const cacheAge = Date.now() - (cachedData.timestamp || 0);
+            if (cacheAge < 20000) return;
         }
         
-        // No cache - fetch from server
         try {
-            console.log(`[FlowCanvas] ID: ${workspaceId} - No cache, fetching from server...`);
-            const data = await getWorkspaceDataAction(workspaceId);
-            if (ignore) return;
-            if (data) {
-                console.log(`[FlowCanvas] ID: ${workspaceId} - Received ${data.nodes.length} raw nodes from server`);
-                const formattedNodes = formatNodes(data.nodes);
-                const formattedEdges = formatEdges(data.edges);
+            // 3. 核心改进：使用 prefetch 逻辑来合并请求
+            // 如果已经在抓取了，这个函数会静默等待
+            await workspaceCache.prefetch(workspaceId, async (id) => {
+                const data = await getWorkspaceDataAction(id);
+                if (!data) return null;
                 
-                console.log(`[FlowCanvas] ID: ${workspaceId} - Formatted into ${formattedNodes.length} React Flow nodes`);
+                const freshNodes = formatNodes(data.nodes);
+                const freshEdges = formatEdges(data.edges);
                 
-                setNodes(formattedNodes);
-                setEdges(formattedEdges);
-                
-                // Dispatch to sidebar handled by useEffect now
+                return {
+                    nodes: freshNodes,
+                    edges: freshEdges,
+                    viewport: (data.workspace.settings as any)?.viewport,
+                    timestamp: Date.now()
+                };
+            });
 
-                const settings = data.workspace.settings as any;
-                
-                // Store in cache
-                workspaceCache.set(workspaceId, {
-                    nodes: formattedNodes,
-                    edges: formattedEdges,
-                    viewport: settings?.viewport,
-                });
-                  
-                if (isFirstLoad.current) {
-                    if (settings?.viewport) {
-                        reactFlowInstance.setViewport(settings.viewport);
-                    }
-                    isFirstLoad.current = false;
-                }
+            // 4. 等待上面的 prefetch 完成后，数据就已经在 Cache 里的
+            const data = workspaceCache.get(workspaceId);
+            if (ignore || !data) return;
+
+            setNodes(data.nodes);
+            setEdges(data.edges);
+            
+            if (isFirstLoad.current && data.viewport) {
+                reactFlowInstance?.setViewport(data.viewport);
+                isFirstLoad.current = false;
             }
         } catch (error) {
             console.error("Failed to load workspace data", error);
         }
     }
     
-    // Helper to format nodes from DB
+    // Helper to format nodes from DB (kept here as private helper)
     function formatNodes(nodes: any[]): Node<any>[] {
         return nodes.map((n: any) => {
             if (n.type === 'textNode') {
@@ -579,7 +550,8 @@ function FlowInnerComponent({ workspaceId }: { workspaceId: string }) {
     
     loadData();
     return () => { ignore = true; };
-  }, [workspaceId, setNodes, setEdges, reactFlowInstance]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspaceId]); // 只在 workspaceId 变化时重新获取，不要依赖 reactFlowInstance
 
   const debouncedSaveViewport = useMemo(
     () => debounce((vp: Viewport) => {
@@ -863,9 +835,11 @@ function FlowInnerComponent({ workspaceId }: { workspaceId: string }) {
                 color: '#ffffff',
             },
         }}
+        panOnDrag={isSpacePressed ? [0, 1, 2] : [1, 2]}  // Space+left click, middle, or right-click for panning
+        panOnScroll={true}
+        zoomOnScroll={false}
         selectionOnDrag={!isSpacePressed}
         selectionMode={SelectionMode.Partial}
-        panOnDrag={isSpacePressed ? [0, 1, 2] : [1, 2]}  // Space+left click, middle, or right-click for panning
         selectNodesOnDrag={!isSpacePressed}
         snapToGrid={true}
         snapGrid={[25, 25]}  // Matches background dot gap
@@ -880,6 +854,10 @@ function FlowInnerComponent({ workspaceId }: { workspaceId: string }) {
             nodeColor="#333" 
             maskColor="rgba(0, 0, 0, 0.7)" 
             className="rounded-xl border border-white/5 !bg-[#121212]/90"
+            style={{
+              width: isMobile ? 100 : 200,
+              height: isMobile ? 75 : 150,
+            }}
           />
       </div>
       </ReactFlow>

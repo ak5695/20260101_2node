@@ -1,8 +1,14 @@
 "use client";
 
 import { type ComponentProps, memo } from "react";
-import { Streamdown } from "streamdown";
+import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";
+
+// 💡 优化：动态导入重型 Markdown 渲染器，防止阻塞首页加载
+const Streamdown = dynamic(() => import("streamdown").then(mod => mod.Streamdown), {
+  ssr: false,
+  loading: () => <div className="animate-pulse flex space-y-2 py-2"><div className="h-4 bg-white/5 rounded w-full"></div></div>
+});
 
 type ResponseProps = ComponentProps<typeof Streamdown>;
 
